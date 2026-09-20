@@ -1,0 +1,177 @@
+{% extends "tka-translations/_layouts/cp" %}
+
+{% block mainContent %}
+
+{% js %}
+window.tkaTranslationsConfig = {
+    category: {{ activeCategory|json_encode|raw }},
+    locales: {{ locales|json_encode|raw }},
+    hasAi: {{ hasAi ? 'true' : 'false' }},
+    defaultAiProvider: {{ defaultAiProvider|json_encode|raw }},
+    labels: {
+        totalKeys: {{ "total keys"|t('tka-translations')|json_encode|raw }},
+        unsavedRows: {{ "unsaved row(s)"|t('tka-translations')|json_encode|raw }},
+        deleteSelected: {{ "Delete Selected"|t('tka-translations')|json_encode|raw }},
+        saveSuccess: {{ "Translations saved successfully."|t('tka-translations')|json_encode|raw }},
+        saveFailed: {{ "Failed to save translations."|t('tka-translations')|json_encode|raw }},
+        deleteSuccess: {{ "Selected keys deleted."|t('tka-translations')|json_encode|raw }},
+        deleteConfirm: {{ "Are you sure you want to delete {count} translation key(s)?"|t('tka-translations')|json_encode|raw }},
+        unsavedConfirm: {{ "You have unsaved changes. Discard and switch category?"|t('tka-translations')|json_encode|raw }},
+        noKeysFound: {{ "No translation keys found."|t('tka-translations')|json_encode|raw }},
+        aiTranslating: {{ "AI is translating…"|t('tka-translations')|json_encode|raw }},
+        aiTranslateMissing: {{ "AI Translate Missing on Page"|t('tka-translations')|json_encode|raw }}
+    }
+};
+{% endjs %}
+
+<div class="tka-translations-container">
+
+    {# Categories Pills #}
+    {% if categories|length > 1 %}
+        <div class="tka-categories-bar">
+            {% for cat in categories %}
+                <button type="button"
+                        class="tka-cat-pill {{ cat == activeCategory ? 'active' : '' }}"
+                        data-category="{{ cat }}">
+                    {{ cat }}
+                </button>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Toolbar #}
+    <div class="tka-toolbar">
+        <div class="tka-toolbar-left">
+            <div class="texticon search">
+                <input type="text"
+                       id="tka-search-input"
+                       class="text fullwidth tka-search-input"
+                       placeholder="{{ 'Search translation keys or values…'|t('tka-translations') }}">
+            </div>
+
+            <div class="select">
+                <select id="tka-status-select">
+                    <option value="all">{{ 'All Statuses'|t('tka-translations') }}</option>
+                    <option value="missing">{{ 'Untranslated / Missing'|t('tka-translations') }}</option>
+                    <option value="translated">{{ 'Fully Translated'|t('tka-translations') }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tka-toolbar-right">
+            {% if hasAi %}
+                <button type="button" class="btn secondary icon" id="tka-ai-translate-page-btn" title="{{ 'Auto-translate all missing fields currently displayed'|t('tka-translations') }}">
+                    ✨ {{ 'AI Translate Page'|t('tka-translations') }}
+                </button>
+            {% endif %}
+
+            <button type="button" class="btn submit add icon" id="tka-open-add-modal-btn">
+                {{ 'Add Translation Key'|t('tka-translations') }}
+            </button>
+        </div>
+    </div>
+
+    {# Translations Table #}
+    <div class="tka-table-wrap">
+        {# Loading Overlay #}
+        <div class="tka-loading-overlay" id="tka-loading-overlay" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+
+        <table class="tka-table">
+            <thead>
+                <tr>
+                    <th style="width: 32px; text-align: center;">
+                        <input type="checkbox" id="tka-select-all">
+                    </th>
+                    <th class="orderable" style="cursor: pointer;" id="tka-sort-message">
+                        <span>{{ 'Source Key'|t('tka-translations') }}</span>
+                    </th>
+                    {% for loc in locales %}
+                        <th>
+                            <span>{{ loc.name }}</span>
+                            <span class="tka-lang-badge">{{ loc.id }}</span>
+                        </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody id="tka-table-body">
+                <tr>
+                    <td colspan="{{ 2 + locales|length }}" style="text-align: center; padding: 40px; color: var(--secondary-text-color);">
+                        {{ 'Loading translations…'|t('tka-translations') }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        {# Pagination Bar #}
+        <div class="tka-pagination">
+            <div>
+                <span id="tka-pagination-info">0 {{ 'total keys'|t('tka-translations') }}</span>
+                <span style="margin-left: 12px; color: var(--secondary-text-color);">
+                    {{ 'Page'|t('tka-translations') }} <strong id="tka-page-current">1</strong> / <span id="tka-page-total">1</span>
+                </span>
+            </div>
+
+            <div class="tka-pagination-buttons">
+                <button type="button" class="tka-page-btn" id="tka-page-first" title="{{ 'First Page'|t('tka-translations') }}">«</button>
+                <button type="button" class="tka-page-btn" id="tka-page-prev" title="{{ 'Previous Page'|t('tka-translations') }}">‹</button>
+                <button type="button" class="tka-page-btn" id="tka-page-next" title="{{ 'Next Page'|t('tka-translations') }}">›</button>
+                <button type="button" class="tka-page-btn" id="tka-page-last" title="{{ 'Last Page'|t('tka-translations') }}">»</button>
+            </div>
+        </div>
+    </div>
+
+    {# Sticky Save Bar #}
+    <div class="tka-sticky-bar" id="tka-sticky-bar" style="display: none;">
+        <div id="tka-sticky-dirty-group" style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 600;" id="tka-dirty-count-label">0 unsaved row(s)</span>
+            <button type="button" class="btn submit" id="tka-save-btn">
+                {{ 'Save Changes (Ctrl+S)'|t('tka-translations') }}
+            </button>
+        </div>
+
+        <div id="tka-sticky-selection-group" style="display: none; align-items: center; gap: 8px;">
+            <button type="button" class="btn secondary error" id="tka-delete-selected-btn">
+                {{ 'Delete Selected'|t('tka-translations') }}
+            </button>
+        </div>
+    </div>
+
+    {# Add Key Modal #}
+    <div class="tka-modal-overlay" id="tka-add-modal" style="display: none;">
+        <div class="tka-modal">
+            <h2 style="margin-top: 0; margin-bottom: 16px;">{{ 'Add New Translation Key'|t('tka-translations') }}</h2>
+
+            <div class="field">
+                <div class="heading">
+                    <label class="required">{{ 'Key / Source Message'|t('tka-translations') }}</label>
+                    <div class="instructions">{{ 'The original phrase in your code or template.'|t('tka-translations') }}</div>
+                </div>
+                <div class="input ltr">
+                    <input type="text" class="text fullwidth" id="tka-new-key-input" placeholder="e.g. Welcome to our website">
+                </div>
+            </div>
+
+            {% for loc in locales %}
+                <div class="field" style="margin-top: 12px;">
+                    <div class="heading">
+                        <label>{{ loc.name }} ({{ loc.id }})</label>
+                    </div>
+                    <div class="input ltr">
+                        <textarea class="text fullwidth tka-new-translation-input"
+                                  data-lang="{{ loc.id }}"
+                                  rows="2"
+                                  placeholder="{{ 'Translation for'|t('tka-translations') }} {{ loc.name }}…"></textarea>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <div class="buttons" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn tka-close-modal-btn">{{ 'Cancel'|t('tka-translations') }}</button>
+                <button type="button" class="btn submit" id="tka-submit-add-btn">{{ 'Add Translation'|t('tka-translations') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

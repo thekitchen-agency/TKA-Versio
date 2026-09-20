@@ -1,0 +1,45 @@
+{% extends "tka-translations/_layouts/cp" %}
+
+{% block mainContent %}
+<div class="readable">
+    <h1>{{ 'Export Translations'|t('tka-translations') }}</h1>
+    <p class="lead">
+        {{ 'Export translation dictionaries to CSV spreadsheets or JSON files for external localization workflows.'|t('tka-translations') }}
+    </p>
+
+    <hr>
+
+    <div class="card" style="background: var(--ui-bg-color, #fff); padding: 20px; border-radius: 6px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1));">
+        <form method="get" action="{{ cpUrl('tka-translations/export/download') }}" accept-charset="UTF-8">
+            <div class="field" style="margin-bottom: 16px;">
+                <div class="heading">
+                    <label class="required">{{ 'Category'|t('tka-translations') }}</label>
+                </div>
+                <div class="select">
+                    <select name="category">
+                        {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="field" style="margin-bottom: 20px;">
+                <div class="heading">
+                    <label class="required">{{ 'Export Format'|t('tka-translations') }}</label>
+                </div>
+                <div class="select">
+                    <select name="format">
+                        <option value="csv">CSV (.csv)</option>
+                        <option value="json">JSON (.json)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn submit icon" data-icon="share">
+                {{ 'Download Export File'|t('tka-translations') }}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

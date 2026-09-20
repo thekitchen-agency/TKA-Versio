@@ -1,0 +1,306 @@
+/**
+ * TKA Translations - Craft 5 CP Styles
+ */
+
+.tka-translations-container {
+    position: relative;
+    margin-bottom: 80px;
+}
+
+/* Header & Filter Toolbar */
+.tka-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    background: var(--ui-bg-color, #fff);
+    padding: 12px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--hairline-color, rgba(0, 0, 0, 0.08));
+}
+
+.tka-toolbar-left,
+.tka-toolbar-right {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tka-search-input {
+    min-width: 260px;
+    max-width: 400px;
+}
+
+/* Category Pill Tabs */
+.tka-categories-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.tka-cat-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color, #2b3a42);
+    background: var(--ui-bg-color, #fff);
+    border: 1px solid var(--hairline-color, rgba(0, 0, 0, 0.1));
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.tka-cat-pill:hover {
+    border-color: var(--link-color, #da5a47);
+    color: var(--link-color, #da5a47);
+}
+
+.tka-cat-pill.active {
+    background: var(--link-color, #da5a47);
+    color: #fff;
+    border-color: var(--link-color, #da5a47);
+}
+
+/* Main Translations Table */
+.tka-table-wrap {
+    background: var(--ui-bg-color, #fff);
+    border: 1px solid var(--hairline-color, rgba(0, 0, 0, 0.08));
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.tka-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 0;
+}
+
+.tka-table th {
+    background: var(--table-header-bg-color, #f7f9fa);
+    color: var(--heading-color, #2b3a42);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--hairline-color, rgba(0, 0, 0, 0.1));
+    white-space: nowrap;
+}
+
+.tka-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--hairline-color, rgba(0, 0, 0, 0.06));
+    vertical-align: top;
+}
+
+.tka-table tr:last-child td {
+    border-bottom: none;
+}
+
+.tka-table tr:hover td {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+.tka-table tr.tka-row-selected td {
+    background: rgba(218, 90, 71, 0.06);
+}
+
+/* Key Column */
+.tka-key-cell {
+    max-width: 280px;
+    min-width: 200px;
+    word-break: break-word;
+}
+
+.tka-key-text {
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text-color, #1a202c);
+    display: block;
+    background: rgba(0, 0, 0, 0.03);
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Translation Textarea */
+.tka-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.tka-translation-textarea {
+    width: 100%;
+    min-height: 36px;
+    resize: vertical;
+    font-size: 13px;
+    line-height: 1.4;
+    padding: 6px 26px 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--hairline-color, rgba(0, 0, 0, 0.15));
+    background: transparent;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.tka-translation-textarea:focus {
+    border-color: var(--link-color, #da5a47);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(218, 90, 71, 0.2);
+    background: var(--ui-bg-color, #fff);
+}
+
+.tka-dirty-indicator {
+    position: absolute;
+    right: 8px;
+    top: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e53e3e;
+    box-shadow: 0 0 4px rgba(229, 62, 62, 0.6);
+    pointer-events: none;
+}
+
+.tka-ai-btn {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    background: rgba(218, 90, 71, 0.08);
+    color: var(--link-color, #da5a47);
+    border: 1px solid rgba(218, 90, 71, 0.2);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.2;
+}
+
+.tka-ai-btn:hover {
+    background: var(--link-color, #da5a47);
+    color: #fff;
+}
+
+.tka-ai-btn:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+/* Language Badge */
+.tka-lang-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--secondary-text-color, #718096);
+    margin-left: 4px;
+}
+
+/* Sticky Save & Action Footer Bar */
+.tka-sticky-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ui-bg-color, #2b3a42);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 500;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tka-sticky-bar .btn {
+    margin: 0;
+}
+
+/* Pagination Bar */
+.tka-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--table-header-bg-color, #f7f9fa);
+    border-top: 1px solid var(--hairline-color, rgba(0, 0, 0, 0.08));
+    font-size: 13px;
+}
+
+.tka-pagination-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tka-page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 4px;
+    border: 1px solid var(--hairline-color, rgba(0, 0, 0, 0.15));
+    background: var(--ui-bg-color, #fff);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tka-page-btn.active {
+    background: var(--link-color, #da5a47);
+    color: #fff;
+    border-color: var(--link-color, #da5a47);
+}
+
+.tka-page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Modal for Add Key */
+.tka-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.tka-modal {
+    background: var(--ui-bg-color, #fff);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 540px;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading Spinner Overlay */
+.tka-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    backdrop-filter: blur(2px);
+}

@@ -1,0 +1,66 @@
+{% extends "tka-translations/_layouts/cp" %}
+
+{% block mainContent %}
+<div class="readable">
+    <h1>{{ 'Import Translations'|t('tka-translations') }}</h1>
+    <p class="lead">
+        {{ 'Import existing translations from static PHP translation files or upload a CSV spreadsheet.'|t('tka-translations') }}
+    </p>
+
+    <hr>
+
+    {# Option 1: Import existing PHP files #}
+    <div class="card" style="background: var(--ui-bg-color, #fff); padding: 20px; border-radius: 6px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); margin-bottom: 24px;">
+        <h3>{{ 'Import from Static PHP Files'|t('tka-translations') }}</h3>
+        <p style="color: var(--secondary-text-color);">
+            {{ 'Reads all existing PHP translation files in your translations directory and synchronizes them into the database.'|t('tka-translations') }}
+        </p>
+
+        <form method="post" action="" accept-charset="UTF-8">
+            {{ csrfInput() }}
+            {{ actionInput('tka-translations/import/import-php') }}
+
+            <button type="submit" class="btn submit icon" data-icon="download">
+                {{ 'Import PHP Translation Files'|t('tka-translations') }}
+            </button>
+        </form>
+    </div>
+
+    {# Option 2: Upload CSV #}
+    <div class="card" style="background: var(--ui-bg-color, #fff); padding: 20px; border-radius: 6px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1));">
+        <h3>{{ 'Import from CSV Spreadsheet'|t('tka-translations') }}</h3>
+        <p style="color: var(--secondary-text-color);">
+            {{ 'Upload a CSV file containing translation columns matching your site locales (e.g. Key, en-US, de-CH).'|t('tka-translations') }}
+        </p>
+
+        <form method="post" action="" enctype="multipart/form-data" accept-charset="UTF-8">
+            {{ csrfInput() }}
+            {{ actionInput('tka-translations/import/import-csv') }}
+
+            <div class="field" style="margin-bottom: 16px;">
+                <div class="heading">
+                    <label class="required">{{ 'Category'|t('tka-translations') }}</label>
+                </div>
+                <div class="select">
+                    <select name="category">
+                        {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="field" style="margin-bottom: 20px;">
+                <div class="heading">
+                    <label class="required">{{ 'CSV File'|t('tka-translations') }}</label>
+                </div>
+                <input type="file" name="csvFile" accept=".csv" required>
+            </div>
+
+            <button type="submit" class="btn submit icon" data-icon="upload">
+                {{ 'Upload & Import CSV'|t('tka-translations') }}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

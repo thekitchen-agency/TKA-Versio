@@ -1,0 +1,33 @@
+{% extends "tka-translations/_layouts/cp" %}
+
+{% block mainContent %}
+<div class="readable">
+    <h1>{{ 'Scan Templates'|t('tka-translations') }}</h1>
+    <p class="lead">
+        {{ 'Scan your project templates and code files for translation strings (using |t or Craft::t) and catalog them into the database automatically.'|t('tka-translations') }}
+    </p>
+
+    <hr>
+
+    <div class="card" style="background: var(--ui-bg-color, #fff); padding: 20px; border-radius: 6px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <h3>{{ 'Scanned Paths'|t('tka-translations') }}</h3>
+            <a href="{{ cpUrl('tka-translations/settings') }}" style="font-size: 12px;">{{ 'Configure scan paths in Settings'|t('tka-translations') }} →</a>
+        </div>
+        <ul style="margin: 8px 0 16px 20px; color: var(--secondary-text-color);">
+            {% for path in templatePaths %}
+                <li><code>{{ path }}</code></li>
+            {% endfor %}
+        </ul>
+
+        <form method="post" action="" accept-charset="UTF-8">
+            {{ csrfInput() }}
+            {{ actionInput('tka-translations/scanner/run') }}
+
+            <button type="submit" class="btn submit icon" data-icon="refresh">
+                {{ 'Start Template Scan'|t('tka-translations') }}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

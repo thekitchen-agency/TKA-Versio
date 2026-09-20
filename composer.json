@@ -1,0 +1,60 @@
+{
+  "name": "thekitchen-agency/craft-tka-translations",
+  "description": "High-performance translation and localization management for Craft CMS 5 with AI translation (DeepL, OpenAI, Gemini), side-by-side multi-site entry translations, OPcache compilation, and Twig AST scanning.",
+  "keywords": [
+    "craft",
+    "craftcms",
+    "craft-plugin",
+    "translations",
+    "localization",
+    "i18n",
+    "ai-translation",
+    "deepl",
+    "openai",
+    "gemini",
+    "tka",
+    "versio"
+  ],
+  "homepage": "https://thekitchen.agency",
+  "type": "craft-plugin",
+  "license": "proprietary",
+  "support": {
+    "email": "tech@thekitchen.agency"
+  },
+  "require": {
+    "php": ">=8.2",
+    "craftcms/cms": "^5.0.0"
+  },
+  "require-dev": {
+    "craftcms/ecs": "dev-main",
+    "craftcms/phpstan": "dev-main"
+  },
+  "autoload": {
+    "psr-4": {
+      "thekitchenagency\\translations\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "tka-translations",
+    "name": "TKA Versio",
+    "developer": "thekitchen.agency",
+    "developerUrl": "https://thekitchen.agency",
+    "documentationUrl": "https://github.com/thekitchen-agency/TKA-Versio#readme",
+    "class": "thekitchenagency\\translations\\Plugin"
+  },
+  "scripts": {
+    "check-cs": "ecs check --ansi",
+    "fix-cs": "ecs check --ansi --fix",
+    "phpstan": "phpstan --memory-limit=1G"
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "php": "8.2"
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true,
+      "craftcms/plugin-installer": true
+    }
+  }
+}

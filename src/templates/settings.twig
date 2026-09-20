@@ -1,0 +1,325 @@
+{% extends "tka-translations/_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% block mainContent %}
+
+{# ---------------------------------------------------- #}
+{# AI COST & USAGE DASHBOARD                           #}
+{# ---------------------------------------------------- #}
+<div class="card" style="background: var(--ui-bg-color, #fff); padding: 24px; border-radius: 8px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h2 style="margin: 0;">{{ 'AI Translation Cost & Usage Dashboard'|t('tka-translations') }}</h2>
+            <p class="light" style="margin: 4px 0 0 0;">
+                {{ 'Real-time metrics and estimated costs incurred from DeepL, OpenAI, and Google Gemini translations.'|t('tka-translations') }}
+            </p>
+        </div>
+
+        {% if aiStats.totalRequests > 0 %}
+            <form method="post" action="" accept-charset="UTF-8" onsubmit="return confirm('{{ 'Reset all AI translation usage history and cost metrics?'|t('tka-translations') }}');">
+                {{ csrfInput() }}
+                {{ actionInput('tka-translations/settings/clear-ai-logs') }}
+                <button type="submit" class="btn small secondary error">
+                    {{ 'Reset Metrics'|t('tka-translations') }}
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    {# KPI Grid #}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        {# Metric 1: Total Cost #}
+        <div style="background: rgba(218, 90, 71, 0.05); border: 1px solid rgba(218, 90, 71, 0.2); border-radius: 8px; padding: 16px;">
+            <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--link-color, #da5a47); margin-bottom: 6px;">
+                {{ 'Total Estimated Cost'|t('tka-translations') }}
+            </div>
+            <div style="font-size: 26px; font-weight: 700; color: var(--heading-color, #2b3a42);">
+                ${{ aiStats.totalCost|number_format(4) }}
+            </div>
+        </div>
+
+        {# Metric 2: Total Requests #}
+        <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); border-radius: 8px; padding: 16px;">
+            <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--secondary-text-color, #718096); margin-bottom: 6px;">
+                {{ 'Total AI Requests'|t('tka-translations') }}
+            </div>
+            <div style="font-size: 26px; font-weight: 700; color: var(--heading-color, #2b3a42);">
+                {{ aiStats.totalRequests|number_format(0) }}
+            </div>
+        </div>
+
+        {# Metric 3: Characters Translated #}
+        <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); border-radius: 8px; padding: 16px;">
+            <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--secondary-text-color, #718096); margin-bottom: 6px;">
+                {{ 'Characters Translated'|t('tka-translations') }}
+            </div>
+            <div style="font-size: 26px; font-weight: 700; color: var(--heading-color, #2b3a42);">
+                {{ aiStats.totalChars|number_format(0) }}
+            </div>
+        </div>
+
+        {# Metric 4: Total Tokens #}
+        <div style="background: rgba(0, 0, 0, 0.02); border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); border-radius: 8px; padding: 16px;">
+            <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--secondary-text-color, #718096); margin-bottom: 6px;">
+                {{ 'Tokens Processed'|t('tka-translations') }}
+            </div>
+            <div style="font-size: 26px; font-weight: 700; color: var(--heading-color, #2b3a42);">
+                {{ aiStats.totalTokens|number_format(0) }}
+            </div>
+        </div>
+    </div>
+
+    {# Provider Breakdown Cards #}
+    <h4 style="margin: 0 0 12px 0;">{{ 'Usage by Provider'|t('tka-translations') }}</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 24px;">
+        {% set providers = [
+            { id: 'deepl', name: 'DeepL API', desc: 'Character-based billing' },
+            { id: 'openai', name: 'OpenAI (ChatGPT)', desc: 'Token-based billing' },
+            { id: 'gemini', name: 'Google Gemini', desc: 'Token-based billing' }
+        ] %}
+
+        {% for p in providers %}
+            {% set pData = aiStats.byProvider[p.id] ?? { requests: 0, cost: 0, characters: 0, tokens: 0 } %}
+            <div style="border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); border-radius: 6px; padding: 12px 14px; background: var(--ui-bg-color, #fff);">
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <strong>{{ p.name }}</strong>
+                    <span style="font-weight: 600; color: var(--link-color, #da5a47);">${{ pData.cost|number_format(4) }}</span>
+                </div>
+                <div style="font-size: 12px; color: var(--secondary-text-color); margin-top: 4px;">
+                    {{ pData.requests }} {{ 'requests'|t('tka-translations') }} • {{ pData.characters }} {{ 'chars'|t('tka-translations') }}
+                    {% if p.id != 'deepl' %}
+                        • {{ pData.tokens }} {{ 'tokens'|t('tka-translations') }}
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {# Recent Activity Table #}
+    {% if aiStats.recentLogs|length > 0 %}
+        <h4 style="margin: 0 0 12px 0;">{{ 'Recent Translations'|t('tka-translations') }}</h4>
+        <div style="border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); border-radius: 6px; overflow: hidden;">
+            <table class="data fullwidth" style="margin: 0; font-size: 12px;">
+                <thead>
+                    <tr>
+                        <th>{{ 'Date'|t('tka-translations') }}</th>
+                        <th>{{ 'Provider'|t('tka-translations') }}</th>
+                        <th>{{ 'Model'|t('tka-translations') }}</th>
+                        <th>{{ 'Direction'|t('tka-translations') }}</th>
+                        <th>{{ 'Characters'|t('tka-translations') }}</th>
+                        <th>{{ 'Tokens'|t('tka-translations') }}</th>
+                        <th>{{ 'Est. Cost'|t('tka-translations') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in aiStats.recentLogs %}
+                        <tr>
+                            <td>{{ log.dateCreated }}</td>
+                            <td><span class="badge">{{ log.provider|upper }}</span></td>
+                            <td><code>{{ log.model }}</code></td>
+                            <td>{{ log.sourceLocale }} → <strong>{{ log.targetLocale }}</strong></td>
+                            <td>{{ log.charactersCount }}</td>
+                            <td>{{ log.inputTokens + log.outputTokens }}</td>
+                            <td><strong>${{ log.estimatedCostUsd|number_format(6) }}</strong></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+{# ---------------------------------------------------- #}
+{# GENERAL & AI SETTINGS FORM                          #}
+{# ---------------------------------------------------- #}
+<form method="post" action="" accept-charset="UTF-8">
+    {{ csrfInput() }}
+    {{ actionInput('tka-translations/settings/save') }}
+    {{ redirectInput('tka-translations/settings') }}
+
+    <h2>{{ 'General Settings'|t('tka-translations') }}</h2>
+
+    {{ forms.textField({
+        label: "Plugin Name"|t('tka-translations'),
+        instructions: "The name of this plugin in the Control Panel sidebar."|t('tka-translations'),
+        id: 'pluginName',
+        name: 'settings[pluginName]',
+        value: settings.pluginName,
+        required: true,
+        errors: settings.getErrors('pluginName')
+    }) }}
+
+    {{ forms.lightswitchField({
+        label: "Compile to Static PHP Files"|t('tka-translations'),
+        instructions: "Automatically compile database translations to static PHP files (translations/{locale}/{category}.php) on save/import for zero-database frontend performance."|t('tka-translations'),
+        id: 'compileToFiles',
+        name: 'settings[compileToFiles]',
+        on: settings.compileToFiles,
+        errors: settings.getErrors('compileToFiles')
+    }) }}
+
+    {{ forms.textField({
+        label: "Compilation Path"|t('tka-translations'),
+        instructions: "Directory path where compiled PHP translation files are stored (supports Craft aliases like @translations)."|t('tka-translations'),
+        id: 'compilationPath',
+        name: 'settings[compilationPath]',
+        value: settings.compilationPath,
+        errors: settings.getErrors('compilationPath')
+    }) }}
+
+    {{ forms.editableTableField({
+        label: "Translation Categories"|t('tka-translations'),
+        instructions: "List of translation categories available in the system (e.g. site, app, email)."|t('tka-translations'),
+        id: 'categories',
+        name: 'settings[categories]',
+        cols: {
+            'category': {
+                'heading': "Category Handle"|t('tka-translations'),
+                'type': 'singleline',
+                'placeholder': 'site'
+            }
+        },
+        rows: settings.categories,
+        errors: settings.getErrors('categories')
+    }) }}
+
+    {{ forms.editableTableField({
+        label: "Scan Paths"|t('tka-translations'),
+        instructions: "Directories to scan for translation keys (supports Craft aliases such as @templates, @root/src, @root/modules)."|t('tka-translations'),
+        id: 'scanPaths',
+        name: 'settings[scanPaths]',
+        cols: {
+            'path': {
+                'heading': "Path or Alias"|t('tka-translations'),
+                'type': 'singleline',
+                'placeholder': '@templates'
+            }
+        },
+        rows: settings.scanPaths ?: [{'path': '@templates'}],
+        errors: settings.getErrors('scanPaths')
+    }) }}
+
+    {% if sectionOptions|length > 0 %}
+        {{ forms.checkboxGroupField({
+            label: "Enabled Sections for Side-by-Side Translation"|t('tka-translations'),
+            instructions: "Select which multi-site sections should appear in the Side-by-Side Entry Translator. If none are selected, all multi-site sections are enabled by default."|t('tka-translations'),
+            id: 'translatableSections',
+            name: 'settings[translatableSections]',
+            options: sectionOptions,
+            values: settings.translatableSections,
+            errors: settings.getErrors('translatableSections')
+        }) }}
+    {% endif %}
+
+    <hr>
+
+    <h2>{{ 'AI Translation Settings'|t('tka-translations') }}</h2>
+    <p class="light" style="margin-top: -10px; margin-bottom: 20px;">
+        {{ 'Configure DeepL, OpenAI, or Google Gemini to enable one-click AI translation directly inside your translation table.'|t('tka-translations') }}
+    </p>
+
+    {{ forms.selectField({
+        label: "Default AI Provider"|t('tka-translations'),
+        instructions: "The default translation service to use when auto-translating strings."|t('tka-translations'),
+        id: 'defaultAiProvider',
+        name: 'settings[defaultAiProvider]',
+        value: settings.defaultAiProvider,
+        options: [
+            { value: 'deepl', label: 'DeepL API' },
+            { value: 'openai', label: 'OpenAI (ChatGPT)' },
+            { value: 'gemini', label: 'Google Gemini' }
+        ],
+        errors: settings.getErrors('defaultAiProvider')
+    }) }}
+
+    {# DeepL Settings #}
+    <div class="card" style="background: var(--ui-bg-color, #fff); padding: 16px 20px; border-radius: 6px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); margin-bottom: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 12px;">DeepL</h3>
+        
+        {{ forms.autosuggestField({
+            label: "DeepL API Key"|t('tka-translations'),
+            instructions: "Enter your DeepL API authentication key (supports environment variables like $DEEPL_API_KEY)."|t('tka-translations'),
+            id: 'deeplApiKey',
+            name: 'settings[deeplApiKey]',
+            value: settings.deeplApiKey,
+            suggestions: craft.cp.getEnvSuggestions(),
+            errors: settings.getErrors('deeplApiKey')
+        }) }}
+
+        {{ forms.selectField({
+            label: "DeepL Plan Type"|t('tka-translations'),
+            id: 'deeplApiType',
+            name: 'settings[deeplApiType]',
+            value: settings.deeplApiType,
+            options: [
+                { value: 'free', label: 'DeepL API Free (api-free.deepl.com)' },
+                { value: 'pro', label: 'DeepL API Pro (api.deepl.com)' }
+            ],
+            errors: settings.getErrors('deeplApiType')
+        }) }}
+    </div>
+
+    {# OpenAI Settings #}
+    <div class="card" style="background: var(--ui-bg-color, #fff); padding: 16px 20px; border-radius: 6px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); margin-bottom: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 12px;">OpenAI</h3>
+
+        {{ forms.autosuggestField({
+            label: "OpenAI API Key"|t('tka-translations'),
+            instructions: "Enter your OpenAI secret API key (supports environment variables like $OPENAI_API_KEY)."|t('tka-translations'),
+            id: 'openaiApiKey',
+            name: 'settings[openaiApiKey]',
+            value: settings.openaiApiKey,
+            suggestions: craft.cp.getEnvSuggestions(),
+            errors: settings.getErrors('openaiApiKey')
+        }) }}
+
+        {{ forms.selectField({
+            label: "OpenAI Model"|t('tka-translations'),
+            id: 'openaiModel',
+            name: 'settings[openaiModel]',
+            value: settings.openaiModel,
+            options: [
+                { value: 'gpt-4o-mini', label: 'GPT-4o mini (Fast & Cost-effective - Recommended)' },
+                { value: 'gpt-4o', label: 'GPT-4o (High precision)' },
+                { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' }
+            ],
+            errors: settings.getErrors('openaiModel')
+        }) }}
+    </div>
+
+    {# Google Gemini Settings #}
+    <div class="card" style="background: var(--ui-bg-color, #fff); padding: 16px 20px; border-radius: 6px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1)); margin-bottom: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 12px;">Google Gemini</h3>
+
+        {{ forms.autosuggestField({
+            label: "Gemini API Key"|t('tka-translations'),
+            instructions: "Enter your Google Gemini API key from AI Studio (supports environment variables like $GEMINI_API_KEY)."|t('tka-translations'),
+            id: 'geminiApiKey',
+            name: 'settings[geminiApiKey]',
+            value: settings.geminiApiKey,
+            suggestions: craft.cp.getEnvSuggestions(),
+            errors: settings.getErrors('geminiApiKey')
+        }) }}
+
+        {{ forms.selectField({
+            label: "Gemini Model"|t('tka-translations'),
+            id: 'geminiModel',
+            name: 'settings[geminiModel]',
+            value: settings.geminiModel,
+            options: [
+                { value: 'gemini-flash-latest', label: 'Gemini Flash (Fast, Latest & Cost-effective - Recommended)' },
+                { value: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
+                { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite' },
+                { value: 'gemini-pro-latest', label: 'Gemini Pro (High reasoning)' }
+            ],
+            errors: settings.getErrors('geminiModel')
+        }) }}
+    </div>
+
+    <hr>
+
+    <div class="buttons">
+        <button type="submit" class="btn submit">{{ 'Save Settings'|t('tka-translations') }}</button>
+    </div>
+</form>
+{% endblock %}

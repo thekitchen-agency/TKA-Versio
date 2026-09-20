@@ -1,0 +1,11 @@
+{% extends "_layouts/cp" %}
+
+{% set title = title ?? "TKA Versio"|t('tka-translations') %}
+{% set selectedSubnavItem = selectedSubnavItem ?? 'messages' %}
+
+{% block content %}
+    <div class="tka-translations-wrapper">
+        {% block mainContent %}
+        {% endblock %}
+    </div>
+{% endblock %}

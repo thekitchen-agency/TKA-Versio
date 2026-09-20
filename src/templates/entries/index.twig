@@ -1,0 +1,112 @@
+{% extends "tka-translations/_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% block mainContent %}
+<div class="tka-entries-container">
+    {% if sections|length == 0 %}
+        <div class="card" style="background: var(--ui-bg-color, #fff); padding: 40px; text-align: center; border-radius: 8px; border: 1px solid var(--hairline-color, rgba(0,0,0,0.1));">
+            <h3 style="margin-top: 0;">{{ 'No Translatable Sections Available'|t('tka-translations') }}</h3>
+            <p class="light" style="max-width: 500px; margin: 0 auto 20px auto;">
+                {{ 'Side-by-side translation requires sections enabled for multiple sites in Craft CMS. Make sure your sections are configured with multiple sites and enabled in Settings.'|t('tka-translations') }}
+            </p>
+            <a href="{{ cpUrl('tka-translations/settings') }}" class="btn submit">{{ 'Configure Settings'|t('tka-translations') }}</a>
+        </div>
+    {% else %}
+        <!-- Top Controls: Section Switcher & Language Pairing -->
+        <div class="tka-entries-header">
+            <!-- Section Pills -->
+            <div class="tka-section-pills">
+                {% for sec in sections %}
+                    <button type="button"
+                            class="tka-section-pill {% if loop.first %}active{% endif %}"
+                            data-section-id="{{ sec.id }}">
+                        {{ sec.name }}
+                    </button>
+                {% endfor %}
+            </div>
+
+            <!-- Site Pairing Controls -->
+            <div class="tka-site-pair-controls">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="tka-source-site-select" style="font-size: 12px; font-weight: 600; color: var(--secondary-text-color);">
+                        {{ 'Source Site:'|t('tka-translations') }}
+                    </label>
+                    <div class="select">
+                        <select id="tka-source-site-select">
+                            {% for site in sites %}
+                                <option value="{{ site.id }}" {% if site.id == defaultSourceSiteId %}selected{% endif %}>
+                                    {{ site.name }} ({{ site.language }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="tka-site-arrow">→</div>
+
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <label for="tka-target-site-select" style="font-size: 12px; font-weight: 600; color: var(--secondary-text-color);">
+                        {{ 'Target Site:'|t('tka-translations') }}
+                    </label>
+                    <div class="select">
+                        <select id="tka-target-site-select">
+                            {% for site in sites %}
+                                <option value="{{ site.id }}" {% if site.id == defaultTargetSiteId %}selected{% endif %}>
+                                    {{ site.name }} ({{ site.language }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Workspace: Sidebar & Side-by-Side Editor -->
+        <div class="tka-workspace-layout">
+            <!-- Sidebar: Entries List -->
+            <div class="tka-entry-sidebar">
+                <div class="tka-sidebar-search">
+                    <div class="texticon search icon">
+                        <input type="text"
+                               id="tka-entry-search"
+                               class="text fullwidth"
+                               placeholder="{{ 'Search entries…'|t('tka-translations') }}">
+                    </div>
+
+                    <div class="select fullwidth">
+                        <select id="tka-entry-status-filter" style="width: 100%;">
+                            <option value="all">{{ 'All Statuses'|t('tka-translations') }}</option>
+                            <option value="untranslated">{{ 'Untranslated (0%)'|t('tka-translations') }}</option>
+                            <option value="partial">{{ 'Partially Translated'|t('tka-translations') }}</option>
+                            <option value="translated">{{ 'Fully Translated (100%)'|t('tka-translations') }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <ul class="tka-entry-list" id="tka-entry-list">
+                    <!-- Populated via Javascript -->
+                </ul>
+            </div>
+
+            <!-- Workspace: Side-by-Side Comparison & Editor -->
+            <div id="tka-entry-editor-workspace">
+                <div class="tka-empty-workspace">
+                    <p style="margin: 0; font-size: 14px;">{{ 'Select an entry from the sidebar to start translating.'|t('tka-translations') }}</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% js %}
+    window.tkaEntryTranslatorConfig = {
+        sections: {{ sections|json_encode|raw }},
+        sites: {{ sites|json_encode|raw }},
+        defaultSourceSiteId: {{ defaultSourceSiteId }},
+        defaultTargetSiteId: {{ defaultTargetSiteId }},
+        hasAi: {{ hasAi ? 'true' : 'false' }},
+        defaultAiProvider: "{{ defaultAiProvider }}"
+    };
+{% endjs %}
+
+{% endblock %}
