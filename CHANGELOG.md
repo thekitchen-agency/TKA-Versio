@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-10-03
+
+### Fixed
+- **Matrix Block Translations**: Explicitly persist nested Matrix block elements when saving target entries in Craft CMS 5, ensuring block translations are saved to the database.
+- **Block Pairing Across Sites**: Match target Matrix blocks by element ID / canonical ID in addition to numerical index.
+- **Validation & Error Reporting**: Added detailed error feedback if target entry or Matrix block validation fails during save.
+- **Editor Input Handling**: Added change event listeners, fixed title/slug dirty state resolution, and added copy-to-target button for Matrix fields.
+- **Translatable Status Indicator**: Visual indicator in comparison tree for fields that are not configured as translatable (`translationMethod: none`) in Craft CMS.
+
 ## [1.1.0] - 2026-09-20
 
 ### Added

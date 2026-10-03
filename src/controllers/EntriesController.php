@@ -138,7 +138,7 @@ class EntriesController extends Controller
 
         $entryId = (int)$this->request->getRequiredBodyParam('entryId');
         $targetSiteId = (int)$this->request->getRequiredBodyParam('targetSiteId');
-        $data = (array)$this->request->getRequiredBodyParam('data');
+        $data = (array)$this->request->getBodyParam('data', []);
 
         try {
             $success = Plugin::getInstance()->entryTranslation->saveTargetEntry($entryId, $targetSiteId, $data);

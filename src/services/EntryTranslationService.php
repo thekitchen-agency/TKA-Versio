@@ -389,7 +389,7 @@ class EntryTranslationService extends Component
                 'isCore' => false,
                 'sourceValue' => (string)($sourceVal ?? ''),
                 'targetValue' => (string)($targetVal ?? ''),
-                'translatable' => true,
+                'translatable' => $field->translationMethod !== \craft\base\Field::TRANSLATION_METHOD_NONE,
             ];
         }
 
@@ -403,7 +403,7 @@ class EntryTranslationService extends Component
                 'isCore' => false,
                 'sourceValue' => (string)($sourceVal ?? ''),
                 'targetValue' => (string)($targetVal ?? ''),
-                'translatable' => true,
+                'translatable' => $field->translationMethod !== \craft\base\Field::TRANSLATION_METHOD_NONE,
             ];
         }
 
@@ -416,7 +416,7 @@ class EntryTranslationService extends Component
                 'isCore' => false,
                 'sourceValue' => (string)$sourceVal,
                 'targetValue' => (string)($targetVal ?? ''),
-                'translatable' => true,
+                'translatable' => $field->translationMethod !== \craft\base\Field::TRANSLATION_METHOD_NONE,
             ];
         }
 
@@ -437,14 +437,19 @@ class EntryTranslationService extends Component
         $targetBlocks = $targetBlocksQuery ? $targetBlocksQuery->all() : [];
 
         $targetBlocksMap = [];
+        $targetBlocksById = [];
         foreach ($targetBlocks as $idx => $tb) {
             $targetBlocksMap[$idx] = $tb;
+            $targetBlocksById[$tb->id] = $tb;
+            if ($tb->canonicalId) {
+                $targetBlocksById[$tb->canonicalId] = $tb;
+            }
         }
 
         $blocks = [];
         foreach ($sourceBlocks as $index => $sourceBlock) {
             /** @var Entry $sourceBlock */
-            $targetBlock = $targetBlocksMap[$index] ?? null;
+            $targetBlock = $targetBlocksById[$sourceBlock->id] ?? ($targetBlocksMap[$index] ?? null);
 
             $blockType = $sourceBlock->getType();
             $blockLayout = $blockType->getFieldLayout();
@@ -490,7 +495,7 @@ class EntryTranslationService extends Component
 
         if (!$targetEntry) {
             /** @var Entry|null $sourceEntry */
-            $sourceEntry = Entry::find()->id($entryId)->one();
+            $sourceEntry = Entry::find()->id($entryId)->status(null)->one();
             if (!$sourceEntry) {
                 throw new Exception("Source entry [{$entryId}] not found.");
             }
@@ -521,17 +526,46 @@ class EntryTranslationService extends Component
             }
         }
 
-        // Set Matrix Blocks Fields
+        // Ensure target entry is enabled for the target site
+        $targetEntry->setEnabledForSite(true);
+
+        // Save target entry first
+        if (!Craft::$app->getElements()->saveElement($targetEntry)) {
+            $errors = $targetEntry->getFirstErrors();
+            throw new Exception(Craft::t('tka-translations', 'Failed to save target entry: {errors}', [
+                'errors' => implode(', ', $errors),
+            ]));
+        }
+
+        // Set and save Matrix Blocks Fields
         if (isset($data['matrix']) && is_array($data['matrix'])) {
             foreach ($data['matrix'] as $matrixHandle => $blocksData) {
                 $targetBlocksQuery = $targetEntry->getFieldValue($matrixHandle);
                 if ($targetBlocksQuery) {
                     $targetBlocks = $targetBlocksQuery->all();
+                    $targetBlocksById = [];
+                    foreach ($targetBlocks as $idx => $tb) {
+                        $targetBlocksById[$tb->id] = $tb;
+                        if ($tb->canonicalId) {
+                            $targetBlocksById[$tb->canonicalId] = $tb;
+                        }
+                    }
+
                     foreach ($blocksData as $blockIndex => $blockValues) {
-                        if (isset($targetBlocks[$blockIndex])) {
-                            $targetBlock = $targetBlocks[$blockIndex];
+                        /** @var Entry|null $targetBlock */
+                        $targetBlock = $targetBlocksById[(int)$blockIndex] ?? ($targetBlocks[$blockIndex] ?? null);
+                        if ($targetBlock) {
                             foreach ($blockValues as $bHandle => $bVal) {
                                 $targetBlock->setFieldValue($bHandle, $bVal);
+                            }
+                            $targetBlock->setEnabledForSite(true);
+                            if (!Craft::$app->getElements()->saveElement($targetBlock)) {
+                                $errors = $targetBlock->getFirstErrors();
+                                throw new Exception(Craft::t('tka-translations', 'Failed to save block #{index} ({type}): {errors}', [
+                                    'index' => is_numeric($blockIndex) ? (int)$blockIndex + 1 : $blockIndex,
+                                    'type' => $targetBlock->getType()->name,
+                                    'errors' => implode(', ', $errors),
+                                ]));
                             }
                         }
                     }
@@ -539,7 +573,7 @@ class EntryTranslationService extends Component
             }
         }
 
-        return Craft::$app->getElements()->saveElement($targetEntry);
+        return true;
     }
 
     /**

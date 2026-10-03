@@ -276,7 +276,12 @@ class TkaEntryTranslatorManager {
             const isTitle = f.handle === 'title';
             const isSlug = f.handle === 'slug';
             const srcVal = (f.sourceValue || '').trim();
-            const tgtVal = (this.dirtyValues.fields[f.handle] ?? (f.targetValue || '')).trim();
+            const currentTgtVal = isTitle
+                ? (this.dirtyValues.title ?? (f.targetValue || ''))
+                : (isSlug
+                    ? (this.dirtyValues.slug ?? (f.targetValue || ''))
+                    : (this.dirtyValues.fields[f.handle] ?? (f.targetValue || '')));
+            const tgtVal = (currentTgtVal || '').trim();
             const isHtml = f.type === 'html';
             const isTextarea = f.type === 'textarea' || isHtml;
 
@@ -288,7 +293,6 @@ class TkaEntryTranslatorManager {
             visibleFieldsCount++;
 
             let inputHtml = '';
-            const currentTgtVal = this.dirtyValues.fields[f.handle] ?? (f.targetValue || '');
             if (isTextarea) {
                 inputHtml = `
                     <textarea class="tka-target-input tka-target-textarea ${isHtml ? 'html' : ''}"
@@ -309,12 +313,17 @@ class TkaEntryTranslatorManager {
                 <button type="button" class="tka-field-ai-btn" data-field="${f.handle}" title="Translate with AI">✨ AI</button>
             ` : '';
 
+            const notTranslatableBadge = (f.translatable === false) ? `
+                <span class="tka-field-type-badge" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;" title="This field is not set to 'Translate for each site' in Craft CMS settings">SHARED</span>
+            ` : '';
+
             fieldsHtml += `
                 <div class="tka-field-card" data-field-handle="${f.handle}">
                     <div class="tka-field-header">
                         <div class="tka-field-label">
                             <span>${this.escapeHtml(f.name)}</span>
                             <span class="tka-field-type-badge">${f.type.toUpperCase()}</span>
+                            ${notTranslatableBadge}
                         </div>
                         <div class="tka-dirty-indicator" style="display: none;" title="Unsaved change"></div>
                     </div>
@@ -399,12 +408,26 @@ class TkaEntryTranslatorManager {
                                     title="Translate block field with AI">✨ AI</button>
                         ` : '';
 
+                        const bNotTranslatableBadge = (bf.translatable === false) ? `
+                            <span class="tka-field-type-badge" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;" title="This field is not set to 'Translate for each site' in Craft CMS settings">SHARED</span>
+                        ` : '';
+
+                        const bCopyToTargetBtn = bSrcVal ? `
+                            <div class="tka-source-actions">
+                                <button type="button" class="tka-mini-action-btn tka-copy-matrix-to-target-btn"
+                                        data-matrix="${m.handle}"
+                                        data-block-idx="${b.index}"
+                                        data-block-field="${bf.handle}">Copy to Target</button>
+                            </div>
+                        ` : '';
+
                         blockFieldsHtml += `
                             <div class="tka-field-card" style="margin-bottom: 8px;">
                                 <div class="tka-field-header">
                                     <div class="tka-field-label">
                                         <span>${this.escapeHtml(bf.name)}</span>
                                         <span class="tka-field-type-badge">${bf.type.toUpperCase()}</span>
+                                        ${bNotTranslatableBadge}
                                     </div>
                                 </div>
                                 <div class="tka-field-grid">
@@ -412,6 +435,7 @@ class TkaEntryTranslatorManager {
                                         <div class="tka-source-box ${!bSrcVal ? 'empty' : ''}">
                                             ${bSrcVal ? (isHtml ? bf.sourceValue : this.escapeHtml(bf.sourceValue)) : '(Empty)'}
                                         </div>
+                                        ${bCopyToTargetBtn}
                                     </div>
                                     <div class="tka-target-box">
                                         ${inputHtml}
@@ -542,34 +566,58 @@ class TkaEntryTranslatorManager {
         const aiAllBtn = this.editorContainer.querySelector('#tka-ai-translate-entry-btn');
         if (aiAllBtn) aiAllBtn.addEventListener('click', () => this.aiTranslateEntireEntry());
 
-        // Field inputs
-        this.editorContainer.querySelectorAll('.tka-target-input').forEach(input => {
-            input.addEventListener('input', (e) => {
-                const fHandle = e.target.getAttribute('data-field');
-                const mHandle = e.target.getAttribute('data-matrix');
-                const bIdx = e.target.getAttribute('data-block-idx');
-                const bField = e.target.getAttribute('data-block-field');
-                const val = e.target.value;
+        // Field inputs (listen to both input and change events)
+        const handleInputChange = (e) => {
+            const fHandle = e.target.getAttribute('data-field');
+            const mHandle = e.target.getAttribute('data-matrix');
+            const bIdx = e.target.getAttribute('data-block-idx');
+            const bField = e.target.getAttribute('data-block-field');
+            const val = e.target.value;
 
-                if (fHandle) {
-                    if (fHandle === 'title') this.dirtyValues.title = val;
-                    else if (fHandle === 'slug') this.dirtyValues.slug = val;
-                    else this.dirtyValues.fields[fHandle] = val;
-                } else if (mHandle && bIdx !== null && bField) {
-                    if (!this.dirtyValues.matrix[mHandle]) this.dirtyValues.matrix[mHandle] = {};
-                    if (!this.dirtyValues.matrix[mHandle][bIdx]) this.dirtyValues.matrix[mHandle][bIdx] = {};
-                    this.dirtyValues.matrix[mHandle][bIdx][bField] = val;
-                }
-            });
+            if (fHandle) {
+                if (fHandle === 'title') this.dirtyValues.title = val;
+                else if (fHandle === 'slug') this.dirtyValues.slug = val;
+                else this.dirtyValues.fields[fHandle] = val;
+            } else if (mHandle && bIdx !== null && bField) {
+                if (!this.dirtyValues.matrix[mHandle]) this.dirtyValues.matrix[mHandle] = {};
+                if (!this.dirtyValues.matrix[mHandle][bIdx]) this.dirtyValues.matrix[mHandle][bIdx] = {};
+                this.dirtyValues.matrix[mHandle][bIdx][bField] = val;
+            }
+        };
+
+        this.editorContainer.querySelectorAll('.tka-target-input').forEach(input => {
+            input.addEventListener('input', handleInputChange);
+            input.addEventListener('change', handleInputChange);
         });
 
-        // Copy source to target buttons
+        // Copy source to target buttons (standard fields)
         this.editorContainer.querySelectorAll('.tka-copy-to-target-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const fHandle = e.currentTarget.getAttribute('data-field');
                 const fieldObj = this.entryData.fields.find(f => f.handle === fHandle);
                 if (fieldObj) {
                     const input = this.editorContainer.querySelector(`.tka-target-input[data-field="${fHandle}"]`);
+                    if (input) {
+                        input.value = fieldObj.sourceValue || '';
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            });
+        });
+
+        // Copy source to target buttons (matrix block fields)
+        this.editorContainer.querySelectorAll('.tka-copy-matrix-to-target-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const mHandle = btn.getAttribute('data-matrix');
+                const bIdx = parseInt(btn.getAttribute('data-block-idx'), 10);
+                const bField = btn.getAttribute('data-block-field');
+
+                const mObj = this.entryData.matrixFields.find(m => m.handle === mHandle);
+                const blockObj = mObj ? mObj.blocks.find(b => b.index === bIdx) : null;
+                const fieldObj = blockObj ? blockObj.fields.find(f => f.handle === bField) : null;
+
+                if (fieldObj) {
+                    const input = this.editorContainer.querySelector(`.tka-target-input[data-matrix="${mHandle}"][data-block-idx="${bIdx}"][data-block-field="${bField}"]`);
                     if (input) {
                         input.value = fieldObj.sourceValue || '';
                         input.dispatchEvent(new Event('input', { bubbles: true }));
