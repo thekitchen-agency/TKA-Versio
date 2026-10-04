@@ -529,8 +529,8 @@ class EntryTranslationService extends Component
         // Ensure target entry is enabled for the target site
         $targetEntry->setEnabledForSite(true);
 
-        // Save target entry first
-        if (!Craft::$app->getElements()->saveElement($targetEntry)) {
+        // Save target entry for the target site only, without propagating to other sites
+        if (!Craft::$app->getElements()->saveElement($targetEntry, false, false)) {
             $errors = $targetEntry->getFirstErrors();
             throw new Exception(Craft::t('tka-translations', 'Failed to save target entry: {errors}', [
                 'errors' => implode(', ', $errors),
@@ -555,11 +555,21 @@ class EntryTranslationService extends Component
                         /** @var Entry|null $targetBlock */
                         $targetBlock = $targetBlocksById[(int)$blockIndex] ?? ($targetBlocks[$blockIndex] ?? null);
                         if ($targetBlock) {
+                            if ($targetBlock->siteId !== $targetSiteId) {
+                                $localizedBlock = Craft::$app->getEntries()->getEntryById($targetBlock->id, $targetSiteId);
+                                if ($localizedBlock) {
+                                    $targetBlock = $localizedBlock;
+                                } else {
+                                    $targetBlock->siteId = $targetSiteId;
+                                }
+                            }
+
                             foreach ($blockValues as $bHandle => $bVal) {
                                 $targetBlock->setFieldValue($bHandle, $bVal);
                             }
                             $targetBlock->setEnabledForSite(true);
-                            if (!Craft::$app->getElements()->saveElement($targetBlock)) {
+                            // Save block for target site only, without propagating to other sites
+                            if (!Craft::$app->getElements()->saveElement($targetBlock, false, false)) {
                                 $errors = $targetBlock->getFirstErrors();
                                 throw new Exception(Craft::t('tka-translations', 'Failed to save block #{index} ({type}): {errors}', [
                                     'index' => is_numeric($blockIndex) ? (int)$blockIndex + 1 : $blockIndex,
